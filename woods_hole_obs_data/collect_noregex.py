@@ -111,7 +111,7 @@ variable_name_overrides = {
                                                       original_units='w/milli-angstrom^2',
                                                       units='w/m^2',
                                                       convert=lambda x: x / 1e13)),
-    'fDOMQSU'    : dict(epic_code=None, overrides=dict(standard_name='concentration_of_colored_dissolved_organic_matter_in_sea_water_expressed_as_equivalent_mass_fraction_of_quinine_sulfate_dihydrate',
+    'fDOMQSU'   : dict(epic_code=None, overrides=dict(standard_name='concentration_of_colored_dissolved_organic_matter_in_sea_water_expressed_as_equivalent_mass_fraction_of_quinine_sulfate_dihydrate',
                                                        units='1')),
     'BPR_1301'  : dict(epic_code=1301),
     'WL_NAVD88' : dict(epic_code=18, overrides=dict(vertical_datum='NAVD88')),
@@ -119,6 +119,12 @@ variable_name_overrides = {
     'BP_915'     : dict(epic_code=915),
     'BPR_915'    : dict(epic_code=915),
     'Baro'       : dict(epic_code=915),
+    'wvdir'      : dict(epic_code=None, overrides=dict(standard_name='sea_surface_wave_from_direction',
+                                                      units='degrees from North')),
+    'wp_peak'    : dict(epic_code=None, overrides=dict(standard_name='sea_surface_wave_period_at_variance_spectral_density_maximum',
+                                                      units='seconds')),
+    'dwvdir'     : dict(epic_code=None, overrides=dict(standard_name='sea_surface_wave_from_direction_at_variance_spectral_density_maximum',
+                                                      units='degrees from North'))
 }
 
 long_name_overrides = {
