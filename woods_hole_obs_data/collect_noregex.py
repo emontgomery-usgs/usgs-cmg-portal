@@ -367,7 +367,7 @@ def normalize_epic_codes(netcdf_file, original_filename):
                         print (attribs.cf_units)
                         if attribs.cf_units is None:
                             print(nc_var.units)
-                            attribs.cf_units=ncvar.units
+                            attribs.cf_units=nc_var.units
 
                         # Set attributes
                         nc_var.standard_name = attribs.standard_name
