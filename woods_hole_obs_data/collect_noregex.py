@@ -360,7 +360,7 @@ def normalize_epic_codes(netcdf_file, original_filename):
                     if epic_code in [905, 908] and 'hml' in netcdf_file.lower():
                         attribs.standard_name = 'surface_downwelling_photosynthetic_radiative_flux_in_air'
 
-                     if attribs is not None and attribs.standard_name is not None:
+                    if attribs is not None and attribs.standard_name is not None:
                         # Convert data to CF units
                         nc_var[:] = attribs.convert(nc_var[:])
                         convert_attributes(nc_var, attribs.convert)
