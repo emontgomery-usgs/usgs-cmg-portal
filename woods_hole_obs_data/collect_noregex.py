@@ -356,7 +356,9 @@ def normalize_epic_codes(netcdf_file, original_filename):
                     if attribs is not None and attribs.standard_name is not None:
                         # Convert data to CF units
                         nc_var[:] = attribs.convert(nc_var[:])
+                        print(nc_var)
                         convert_attributes(nc_var, attribs.convert)
+                        print (attribs.cf_units)
                         # Set attributes
                         nc_var.standard_name = attribs.standard_name
                         nc_var.long_name     = attribs.long_name
@@ -610,7 +612,7 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
                 for dv in nc.variables:
                     depth_variables += [ x for x in nc.variables.get(dv).dimensions if 'depth' in x ]
                 depth_variables = sorted(list(set(depth_variables)))
-                print(depth_variables)
+                print(['depth vars = ' + depth_variables])
                 
                 try:
                     assert depth_variables
