@@ -336,6 +336,7 @@ def normalize_epic_codes(netcdf_file, original_filename):
                                 nc_var.setncattr(k, d)
 
             if hasattr(nc_var, "epic_code") and nc_var.epic_code:
+                print(nc_var)
                 try:
                     epic_code = int(nc_var.epic_code)
                 except ValueError:
@@ -356,7 +357,6 @@ def normalize_epic_codes(netcdf_file, original_filename):
                     if attribs is not None and attribs.standard_name is not None:
                         # Convert data to CF units
                         nc_var[:] = attribs.convert(nc_var[:])
-                        print(nc_var)
                         convert_attributes(nc_var, attribs.convert)
                         print (attribs.cf_units)
                         # Set attributes
@@ -612,7 +612,7 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
                 for dv in nc.variables:
                     depth_variables += [ x for x in nc.variables.get(dv).dimensions if 'depth' in x ]
                 depth_variables = sorted(list(set(depth_variables)))
-                print(['depth vars = ' + depth_variables])
+                print(['depth vars = ' + depth_variables[0]])
                 
                 try:
                     assert depth_variables
