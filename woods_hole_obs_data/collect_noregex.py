@@ -638,7 +638,7 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
                 else:
                     print('we could insert a reasonable depth here')
                     type(depth_values)
-                    type depth(conversion)
+                    type(depth_conversion)
                 depth_values = depth_values * depth_conversion
 
                 if not os.path.isdir(output_directory):
