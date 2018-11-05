@@ -610,12 +610,15 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
                 for dv in nc.variables:
                     depth_variables += [ x for x in nc.variables.get(dv).dimensions if 'depth' in x ]
                 depth_variables = sorted(list(set(depth_variables)))
-
+                print(depth_variables)
+                
                 try:
                     assert depth_variables
                     depth_values = np.asarray([ nc.variables.get(x)[:] for x in depth_variables ]).flatten()
+                    print(depth_values)
                 except (AssertionError, TypeError):
                     logger.warning("No depth variables found in {}, skipping.".format(down_file))
+                    print('if here, no depth values found, skipping')
                     continue
 
                 # Convert everything to positive up, unless it is specifically specified as "up" already
@@ -624,6 +627,8 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
                     pull_positive = nc.variables.get(depth_variables[0])
                     if hasattr(pull_positive, 'positive') and pull_positive.positive.lower() == 'up':
                         depth_conversion = 1.0
+                else:
+                    print('we could insert a reasonable depth here')
                 depth_values = depth_values * depth_conversion
 
                 if not os.path.isdir(output_directory):
