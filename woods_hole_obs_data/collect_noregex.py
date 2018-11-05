@@ -309,7 +309,7 @@ def normalize_epic_codes(netcdf_file, original_filename):
     with EnhancedDataset(netcdf_file, 'a') as nc:
         for v in nc.variables:
             nc_var = nc.variables.get(v)
-            print (nc_var)
+            #print (nc_var)
             if v in variable_name_overrides:
                 ec = variable_name_overrides.get(v).get('epic_code', None)
                 if ec is not None:
@@ -336,27 +336,32 @@ def normalize_epic_codes(netcdf_file, original_filename):
                                 convert_attributes(nc_var, d)
                             elif k != 'original_units':
                                 nc_var.setncattr(k, d)
-            print ('done with long_name check')
+            print ('done with long_name check, starting epic_code check')
             if hasattr(nc_var, "epic_code") and nc_var.epic_code:
-                print(nc_var)
+                #print(nc_var)
                 try:
+                    print('trying to convert epic_code to int')
                     epic_code = int(nc_var.epic_code)
                 except ValueError:
                     logger.debug("No EPIC code specified on {0}".format(v))
                 else:
 
                     # Specialized cases for generic EPIC codes
-                    print ('in specialized code segment')
+                    print ('in else part of epic_code segment prior to calling epic2cf')
                     if epic_code in special_map:
                         attribs = special_map.get(epic_code)(nc_var, original_filename)
                     else:
                         attribs = epic2cf.mapping.get(epic_code)
+                    print ('in else part of epic_code segment after calling epic2cf')
+                    print (attribs)
 
                     # Special case for 'Onset weather stations'.
                     # https://github.com/USGS-CMG/usgs-cmg-portal/issues/69
                     if epic_code in [905, 908] and 'hml' in netcdf_file.lower():
                         attribs.standard_name = 'surface_downwelling_photosynthetic_radiative_flux_in_air'
 
+                    if attribs is None:
+                        print(nc_var)
                     if attribs is not None and attribs.standard_name is not None:
                         # Convert data to CF units
                         nc_var[:] = attribs.convert(nc_var[:])
