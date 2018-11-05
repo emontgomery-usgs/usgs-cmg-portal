@@ -305,9 +305,11 @@ def convert_attributes(ncvar, convert_function):
 
 
 def normalize_epic_codes(netcdf_file, original_filename):
+    print ('in normalize_epic_codes')
     with EnhancedDataset(netcdf_file, 'a') as nc:
         for v in nc.variables:
             nc_var = nc.variables.get(v)
+            print (nc_var)
             if v in variable_name_overrides:
                 ec = variable_name_overrides.get(v).get('epic_code', None)
                 if ec is not None:
@@ -334,7 +336,7 @@ def normalize_epic_codes(netcdf_file, original_filename):
                                 convert_attributes(nc_var, d)
                             elif k != 'original_units':
                                 nc_var.setncattr(k, d)
-
+            print ('done with long_name check')
             if hasattr(nc_var, "epic_code") and nc_var.epic_code:
                 print(nc_var)
                 try:
@@ -344,6 +346,7 @@ def normalize_epic_codes(netcdf_file, original_filename):
                 else:
 
                     # Specialized cases for generic EPIC codes
+                    print ('in specialized code segment')
                     if epic_code in special_map:
                         attribs = special_map.get(epic_code)(nc_var, original_filename)
                     else:
@@ -512,7 +515,7 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
             downloaded_files = [ dl for dl in downloaded_files if should_keep(dl) ]
 
     for down_file in sorted(downloaded_files):
-
+        print(down_file)
         temp_fd, temp_file = tempfile.mkstemp(prefix='cmg_collector', suffix='nc')
         try:
 
@@ -572,7 +575,7 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
             logger.info("Translating {0} into CF1.6 format: {1}".format(down_file, os.path.abspath(os.path.join(output_directory, file_name))))
 
             with EnhancedDataset(temp_file) as nc:
-
+                print('in EnhancedDataset section')
                 try:
                     latitude  = nc.variables.get("lat")[0]
                     longitude = nc.variables.get("lon")[0]
@@ -612,7 +615,7 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
                 for dv in nc.variables:
                     depth_variables += [ x for x in nc.variables.get(dv).dimensions if 'depth' in x ]
                 depth_variables = sorted(list(set(depth_variables)))
-                print(['depth vars = ' + depth_variables[0]])
+                #print(['depth vars = ' + depth_variables[0]])
                 
                 try:
                     assert depth_variables
