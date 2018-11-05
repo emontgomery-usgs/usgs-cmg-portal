@@ -621,7 +621,7 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
                     try:
                         depth_variables = ('depth')
                         depth_values = (-file_global_attributes['WATER_DEPTH'] + file_global_attributes['initial_instrument_height'])
-                    except(TypeError)
+                    except TypeError:
                         logger.warning("No depth variables found in {}, skipping.".format(down_file))
                         continue
 
