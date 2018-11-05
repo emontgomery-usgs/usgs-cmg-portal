@@ -213,6 +213,7 @@ def download(folder, project_metadata, filesubset, since):
 
     try:
         for k, v in project_metadata.items():
+            print(v)
             # http://regexr.com/3conn
             datasets = Crawl(v['catalog_xml'],
                              select=['(.*.nc$)'],
