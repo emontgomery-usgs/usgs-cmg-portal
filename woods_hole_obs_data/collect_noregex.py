@@ -632,10 +632,13 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
                 depth_conversion = -1.0
                 if depth_variables:
                     pull_positive = nc.variables.get(depth_variables[0])
+                    print(pull_positive)
                     if hasattr(pull_positive, 'positive') and pull_positive.positive.lower() == 'up':
                         depth_conversion = 1.0
                 else:
                     print('we could insert a reasonable depth here')
+                    type(depth_values)
+                    type depth(conversion)
                 depth_values = depth_values * depth_conversion
 
                 if not os.path.isdir(output_directory):
