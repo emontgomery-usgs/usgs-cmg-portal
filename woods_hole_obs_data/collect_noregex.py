@@ -619,8 +619,11 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
                     depth_values = np.asarray([ nc.variables.get(x)[:] for x in depth_variables ]).flatten()
                 except (AssertionError, TypeError):
                     try:
-                        depth_variables = ('depth')
-                        depth_values = (-file_global_attributes['WATER_DEPTH'] + file_global_attributes['initial_instrument_height'])
+                        depth_variables = ['depth']
+                        depth_values = [-file_global_attributes['WATER_DEPTH'] + file_global_attributes['initial_instrument_height']]
+                        print(file_global_attributes['WATER_DEPTH'])
+                        print(file_global_attributes['initial_instrument_height'])
+                        print(depth_variables, depth_values)
                     except TypeError:
                         logger.warning("No depth variables found in {}, skipping.".format(down_file))
                         continue
