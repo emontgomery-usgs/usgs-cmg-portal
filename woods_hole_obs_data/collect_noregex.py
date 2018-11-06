@@ -619,7 +619,6 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
                     depth_values = np.asarray([ nc.variables.get(x)[:] for x in depth_variables ]).flatten()
                 except (AssertionError, TypeError):
                     try:
-                        depth_variables = ['depth']
                         depth_values = [-file_global_attributes['WATER_DEPTH'] + file_global_attributes['initial_instrument_height']]
                         print(file_global_attributes['WATER_DEPTH'])
                         print(file_global_attributes['initial_instrument_height'])
@@ -636,6 +635,7 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
                     if hasattr(pull_positive, 'positive') and pull_positive.positive.lower() == 'up':
                         depth_conversion = 1.0
                 else:
+                    depth_variables = ['depth']   #this should only apply to the V waves files, so depth should have -1 applied
                     print('we could insert a reasonable depth here')
                     type(depth_values)
                     type(depth_conversion)
