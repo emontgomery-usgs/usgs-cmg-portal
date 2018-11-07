@@ -356,6 +356,8 @@ def normalize_epic_codes(netcdf_file, original_filename):
                         # Convert data to CF units
                         nc_var[:] = attribs.convert(nc_var[:])
                         convert_attributes(nc_var, attribs.convert)
+                        # this section solved the problem in the Vp-cal file
+                        # there's no reason this var gets 'None' in attribs.cf_units, but it's there
                         if attribs.cf_units is None:
                             print('attribs.cf_units is None- replacing with nc_var.units')
                             attribs.cf_units=nc_var.units
@@ -619,7 +621,7 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
                     depth_values = np.asarray([ nc.variables.get(x)[:] for x in depth_variables ]).flatten()
                 except (AssertionError, TypeError):
                     try:
-                        # this is currently only used by Vp waves files
+                        # this is currently only used by Vp waves files, since there's no depth() variable/dimension
                         depth_values = np.asarray([-file_global_attributes['WATER_DEPTH'] + file_global_attributes['initial_instrument_height']])
                         #print(file_global_attributes['WATER_DEPTH'])
                         #print(file_global_attributes['initial_instrument_height'])
