@@ -442,7 +442,7 @@ def normalize_units(netcdf_file):
                 nc_var[:] = d(nc_var[:])
                 nc_var.standard_name = 'sea_surface_wave_to_direction_at_variance_spectral_density_maximum'
                 nc_var.long_name = "Wave Direction (to TN)"
-                nc_var.note = 'Dominate wave direction (propagating TO) as defined by direction band with most total energy summed over all frequencies'
+                nc_var.note = 'Dominant wave direction (propagating TO) as defined by direction band with most total energy summed over all frequencies'
                 convert_attributes(nc_var, d)
 
 def normalize_time(netcdf_file):
@@ -564,21 +564,21 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
 
             fname = os.path.basename(down_file)
             feature_name, file_ext = os.path.splitext(os.path.basename(down_file))
-            try:
-                if int(fname[0]) <= 9 and int(fname[0]) >= 2:
-                    # 1.) everything with first char between 2-9 is 3-digit
-                    mooring_id = int(fname[0:3])
-                elif int(fname[0]) == 1:
-                   # 2.) if MOORING starts with 1, and data is newer than 2014, it's 4 digit, otherwise 3 digit.
-                    if first_time > datetime(2014, 1, 1, 0):
-                        # 4 digit if after Jan 1, 2014
-                        mooring_id = int(fname[0:4])
-                    else:
-                        # 3 digit if before
-                        mooring_id = int(fname[0:3])
-            except ValueError:
-                logger.exception("Could not create a suitable station_id. Skipping {0}.".format(down_file))
-                continue
+            #try:
+            #    if int(fname[0]) <= 9 and int(fname[0]) >= 2:
+            #        # 1.) everything with first char between 2-9 is 3-digit
+            #        mooring_id = int(fname[0:3])
+            #    elif int(fname[0]) == 1:
+            #       # 2.) if MOORING starts with 1, and data is newer than 2014, it's 4 digit, otherwise 3 digit.
+            #        if first_time > datetime(2014, 1, 1, 0):
+            #            # 4 digit if after Jan 1, 2014
+            #            mooring_id = int(fname[0:4])
+            #        else:
+            #            # 3 digit if before
+            #            mooring_id = int(fname[0:3])
+            #except ValueError:
+            #    logger.exception("Could not create a suitable station_id. Skipping {0}.".format(down_file))
+            #    continue
  
             #this doesn't work -get mooring_id from attribute instead of file name
             #with EnhancedDataset(temp_file) as nc:
@@ -587,7 +587,7 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
             #    except ValueError:
             #        logger.exception("Could not create a suitable station_id. Skipping {0}.".format(down_file))
             #        continue
-            print (down_file)
+
             file_name = os.path.basename(down_file)
             output_directory = os.path.join(output, project_name)
             logger.info("Translating {0} into CF1.6 format: {1}".format(down_file, os.path.abspath(os.path.join(output_directory, file_name))))
@@ -608,7 +608,9 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
                 #file_global_attributes['MOORING'] = mooring_id
                 file_global_attributes['original_filename'] = fname
                 file_global_attributes['original_folder'] = project_name
-
+                mooring_id=file_global_attributes['MOORING']
+                print(mooring_id)
+                    
                 no_override = ['id', 'MOORING', 'original_filename', 'original_folder', 'catalog_xml', 'project_name']
                 if project_name in project_metadata:
                     for k, v in project_metadata[project_name].items():
