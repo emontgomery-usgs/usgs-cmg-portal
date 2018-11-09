@@ -577,11 +577,12 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
             #            # 3 digit if before
             #            mooring_id = int(fname[0:3])
             #get mooring_id from attribute instead of file name
-            try:
-                 mooring_id = nc.ncattrs.get("MOORING")
-            except ValueError:
-                logger.exception("Could not create a suitable station_id. Skipping {0}.".format(down_file))
-                continue
+            with EnhancedDataset(temp_file) as nc:
+                try:
+                    mooring_id = nc.ncattrs.get("MOORING")
+                except ValueError:
+                    logger.exception("Could not create a suitable station_id. Skipping {0}.".format(down_file))
+                    continue
 
             file_name = os.path.basename(down_file)
             output_directory = os.path.join(output, project_name)
