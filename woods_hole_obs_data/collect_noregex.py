@@ -434,15 +434,16 @@ def normalize_units(netcdf_file):
                 nc_var.long_name = "Wave Direction (to TN)"
                 nc_var.note = 'Compass Direction TO which waves are propagating'
                 convert_attributes(nc_var, d)
-            elif hasattr(nc_var, 'standard_name') and nc_var.standard_name == 'sea_surface_wave_from_direction_at_variance_spectral_density_maximum':
+            # this should work, but ends up with sea_surface_wave_to_direction as standard_name!
+            #elif hasattr(nc_var, 'standard_name') and nc_var.standard_name == 'sea_surface_wave_from_direction_at_variance_spectral_density_maximum':
                 # Convert "From" to "To" direction
-                def d(x):
-                    return (x + 180) % 360
-                nc_var[:] = d(nc_var[:])
-                nc_var.standard_name = 'sea_surface_wave_to_direction_at_variance_spectral_density_maximum'
-                nc_var.long_name = "Wave Direction (to TN)"
-                nc_var.note = 'Compass Direction TO which waves are propagating'
-                convert_attributes(nc_var, d)
+                #def d(x):
+                #    return (x + 180) % 360
+                #nc_var[:] = d(nc_var[:])
+                #nc_var.standard_name = 'sea_surface_wave_to_direction_at_variance_spectral_density_maximum'
+                #nc_var.long_name = "Wave Direction (to TN)"
+                #nc_var.note = 'Compass Direction TO which waves are propagating'
+                #convert_attributes(nc_var, d)
 
 def normalize_time(netcdf_file):
     epoch_units       = 'seconds since 1970-01-01T00:00:00Z'
@@ -561,20 +562,23 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
             latitude     = None
             longitude    = None
 
-            fname = os.path.basename(down_file)
-            feature_name, file_ext = os.path.splitext(os.path.basename(down_file))
+            #fname = os.path.basename(down_file)
+            #feature_name, file_ext = os.path.splitext(os.path.basename(down_file))
+            #try:
+            #    if int(fname[0]) <= 9 and int(fname[0]) >= 2:
+            #        # 1.) everything with first char between 2-9 is 3-digit
+            #        mooring_id = int(fname[0:3])
+            #    elif int(fname[0]) == 1:
+            #        # 2.) if MOORING starts with 1, and data is newer than 2014, it's 4 digit, otherwise 3 digit.
+            #        if first_time > datetime(2014, 1, 1, 0):
+            #            # 4 digit if after Jan 1, 2014
+            #            mooring_id = int(fname[0:4])
+            #        else:
+            #            # 3 digit if before
+            #            mooring_id = int(fname[0:3])
+            #get mooring_id from attribute instead of file name
             try:
-                if int(fname[0]) <= 9 and int(fname[0]) >= 2:
-                    # 1.) everything with first char between 2-9 is 3-digit
-                    mooring_id = int(fname[0:3])
-                elif int(fname[0]) == 1:
-                    # 2.) if MOORING starts with 1, and data is newer than 2014, it's 4 digit, otherwise 3 digit.
-                    if first_time > datetime(2014, 1, 1, 0):
-                        # 4 digit if after Jan 1, 2014
-                        mooring_id = int(fname[0:4])
-                    else:
-                        # 3 digit if before
-                        mooring_id = int(fname[0:3])
+                 mooring_id = nc.ncattrs.get("MOORING")
             except ValueError:
                 logger.exception("Could not create a suitable station_id. Skipping {0}.".format(down_file))
                 continue
@@ -597,7 +601,7 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
                 file_global_attributes = { k : getattr(nc, k) for k in nc.ncattrs() }
                 file_global_attributes.update(global_attributes)
                 file_global_attributes['id'] = feature_name
-                file_global_attributes['MOORING'] = mooring_id
+                #file_global_attributes['MOORING'] = mooring_id
                 file_global_attributes['original_filename'] = fname
                 file_global_attributes['original_folder'] = project_name
 
@@ -624,15 +628,15 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
                 for dv in nc.variables:
                     depth_variables += [ x for x in nc.variables.get(dv).dimensions if 'depth' in x ]
                 depth_variables = sorted(list(set(depth_variables)))
-                print(depth_variables)
+                print(['in depth_variables we have: ' depth_variables])
                 try:
                     assert depth_variables
                     depth_values = np.asarray([ nc.variables.get(x)[:] for x in depth_variables ]).flatten()
                 except (AssertionError, TypeError):
                     try:
                         # this is currently only used by Vp waves files, since there's no depth() variable/dimension
-                        # inserting 0 because that's the best answer
                         #depth_values = np.asarray([-file_global_attributes['WATER_DEPTH'] + file_global_attributes['initial_instrument_height']])
+                        # inserting 0 because that's the best answer
                         depth_values = np.asarray(0)
                         #print(file_global_attributes['WATER_DEPTH'])
                         #print(file_global_attributes['initial_instrument_height'])
@@ -649,7 +653,8 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
                     if hasattr(pull_positive, 'positive') and pull_positive.positive.lower() == 'up':
                         depth_conversion = 1.0
 
-                depth_values = depth_values * depth_conversion
+                if depth_values(0) > 0.0 or depth_values(0) < 0.0
+                    depth_values = depth_values * depth_conversion
 
                 if not os.path.isdir(output_directory):
                     os.makedirs(output_directory)
