@@ -588,7 +588,6 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
             logger.info("Translating {0} into CF1.6 format: {1}".format(down_file, os.path.abspath(os.path.join(output_directory, file_name))))
 
             with EnhancedDataset(temp_file) as nc:
-                print('in EnhancedDataset section')
                 try:
                     latitude  = nc.variables.get("lat")[0]
                     longitude = nc.variables.get("lon")[0]
@@ -628,7 +627,8 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
                 for dv in nc.variables:
                     depth_variables += [ x for x in nc.variables.get(dv).dimensions if 'depth' in x ]
                 depth_variables = sorted(list(set(depth_variables)))
-                print(['in depth_variables we have: ' depth_variables])
+                print('in depth_variables we have: ')
+                print(depth_variables)
                 try:
                     assert depth_variables
                     depth_values = np.asarray([ nc.variables.get(x)[:] for x in depth_variables ]).flatten()
@@ -649,7 +649,7 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
                 depth_conversion = -1.0
                 if depth_variables:
                     pull_positive = nc.variables.get(depth_variables[0])
-                    print(pull_positive)
+                    #print(pull_positive)
                     if hasattr(pull_positive, 'positive') and pull_positive.positive.lower() == 'up':
                         depth_conversion = 1.0
 
