@@ -638,6 +638,8 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
                         #depth_values = np.asarray([-file_global_attributes['WATER_DEPTH'] + file_global_attributes['initial_instrument_height']])
                         # inserting 0 because that's the best answer
                         depth_values = np.asarray(0)
+                        print (with no depth variable, we have: ')
+                        print(depth_variables)    
                         #print(file_global_attributes['WATER_DEPTH'])
                         #print(file_global_attributes['initial_instrument_height'])
                         #print(depth_variables, depth_values)
@@ -653,8 +655,9 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
                     if hasattr(pull_positive, 'positive') and pull_positive.positive.lower() == 'up':
                         depth_conversion = 1.0
 
-                if depth_values(0) > 0.0 or depth_values(0) < 0.0
-                    depth_values = depth_values * depth_conversion
+                # this doesn't work, but depth conversion should only happen if not 0
+                #if depth_values(0) > 0.0 or depth_values(0) < 0.0
+                #    depth_values = depth_values * depth_conversion
 
                 if not os.path.isdir(output_directory):
                     os.makedirs(output_directory)
