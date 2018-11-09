@@ -672,6 +672,9 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
 
                 # Set the platform type from the global attribute 'platform_type', defaulting to 'fixed'
                 with EnhancedDataset(ts.out_file, 'a') as onc:
+                    # try setting 'z' to 0 for waves here
+                    if 'wh_4061' in onc.variables:
+                        print ('wave height variable present, so is a waves file, figure out how to put 0 in z')
                     platform_type = getattr(onc, 'platform_type', 'fixed').lower()
                     onc.variables['platform'].setncattr('type', platform_type)
                     onc.variables['platform'].setncattr('nodc_name', "FIXED PLATFORM, MOORINGS")
