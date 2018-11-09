@@ -425,7 +425,7 @@ def normalize_units(netcdf_file):
                 nc_var[:] = d(nc_var[:])
                 nc_var.units = "degree_Celsius"
                 convert_attributes(nc_var, d)
-            elif hasattr(nc_var, 'standard_name') and nc_var.standard_name == 'sea_surface_wave_from_direction' or hasattr(nc_var, 'standard_name') and nc_var.standard_name == 'sea_surface_wave_from_direction_at_variance_spectral_density_maximum':
+            elif hasattr(nc_var, 'standard_name') and nc_var.standard_name == 'sea_surface_wave_from_direction':
                 # Convert "From" to "To" direction
                 def d(x):
                     return (x + 180) % 360
@@ -434,7 +434,15 @@ def normalize_units(netcdf_file):
                 nc_var.long_name = "Wave Direction (to TN)"
                 nc_var.note = 'Compass Direction TO which waves are propagating'
                 convert_attributes(nc_var, d)
-
+            elif hasattr(nc_var, 'standard_name') and nc_var.standard_name == 'sea_surface_wave_from_direction_at_variance_spectral_density_maximum':
+                # Convert "From" to "To" direction
+                def d(x):
+                    return (x + 180) % 360
+                nc_var[:] = d(nc_var[:])
+                nc_var.standard_name = 'sea_surface_wave_to_direction_at_variance_spectral_density_maximum'
+                nc_var.long_name = "Wave Direction (to TN)"
+                nc_var.note = 'Compass Direction TO which waves are propagating'
+                convert_attributes(nc_var, d)
 
 def normalize_time(netcdf_file):
     epoch_units       = 'seconds since 1970-01-01T00:00:00Z'
