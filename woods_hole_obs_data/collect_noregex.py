@@ -672,11 +672,6 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
 
                 # Set the platform type from the global attribute 'platform_type', defaulting to 'fixed'
                 with EnhancedDataset(ts.out_file, 'a') as onc:
-                    # try setting 'z' to 0 for waves here
-                    for v in onc.variables:
-                        print(v)
-                        if v == 'wh_4061':
-                            print ('wave height variable present, so is a waves file, figure out how to put 0 in z')
                     platform_type = getattr(onc, 'platform_type', 'fixed').lower()
                     onc.variables['platform'].setncattr('type', platform_type)
                     onc.variables['platform'].setncattr('nodc_name', "FIXED PLATFORM, MOORINGS")
@@ -690,6 +685,9 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
                     try:
                         if other in coord_vars:
                             continue
+                        # try setting 'z' to 0 for waves here                   
+                        if other == 'wh_4061':
+                            print ('wave height variable present, so is a waves file, figure out how to put 0 in z')
 
                         ovsd = None  # old var sensor depth
                         old_var = nc.variables.get(other)
