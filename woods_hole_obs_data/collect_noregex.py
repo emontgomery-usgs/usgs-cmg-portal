@@ -562,27 +562,28 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
             latitude     = None
             longitude    = None
 
-            #fname = os.path.basename(down_file)
-            #feature_name, file_ext = os.path.splitext(os.path.basename(down_file))
-            #try:
-            #    if int(fname[0]) <= 9 and int(fname[0]) >= 2:
-            #        # 1.) everything with first char between 2-9 is 3-digit
-            #        mooring_id = int(fname[0:3])
-            #    elif int(fname[0]) == 1:
-            #        # 2.) if MOORING starts with 1, and data is newer than 2014, it's 4 digit, otherwise 3 digit.
-            #        if first_time > datetime(2014, 1, 1, 0):
-            #            # 4 digit if after Jan 1, 2014
-            #            mooring_id = int(fname[0:4])
-            #        else:
-            #            # 3 digit if before
-            #            mooring_id = int(fname[0:3])
-            #get mooring_id from attribute instead of file name
-            with EnhancedDataset(temp_file) as nc:
-                try:
-                    mooring_id = getattr(nc,'MOORING')
-                except ValueError:
-                    logger.exception("Could not create a suitable station_id. Skipping {0}.".format(down_file))
-                    continue
+            fname = os.path.basename(down_file)
+            feature_name, file_ext = os.path.splitext(os.path.basename(down_file))
+            try:
+                if int(fname[0]) <= 9 and int(fname[0]) >= 2:
+                    # 1.) everything with first char between 2-9 is 3-digit
+                    mooring_id = int(fname[0:3])
+                elif int(fname[0]) == 1:
+                   # 2.) if MOORING starts with 1, and data is newer than 2014, it's 4 digit, otherwise 3 digit.
+                    if first_time > datetime(2014, 1, 1, 0):
+                        # 4 digit if after Jan 1, 2014
+                        mooring_id = int(fname[0:4])
+                    else:
+                        # 3 digit if before
+                        mooring_id = int(fname[0:3])
+                        
+            #this doesn't work -get mooring_id from attribute instead of file name
+            #with EnhancedDataset(temp_file) as nc:
+            #    try:
+            #        mooring_id = getattr(nc,'MOORING')
+            #    except ValueError:
+            #        logger.exception("Could not create a suitable station_id. Skipping {0}.".format(down_file))
+            #        continue
 
             file_name = os.path.basename(down_file)
             output_directory = os.path.join(output, project_name)
