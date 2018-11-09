@@ -661,7 +661,7 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
                     #print(pull_positive)
                     if hasattr(pull_positive, 'positive') and pull_positive.positive.lower() == 'up':
                         depth_conversion = 1.0
-
+                depth_values = depth_values * depth_conversion
                 # this doesn't work, but depth conversion should only happen if not 0
                 #if depth_values(0) > 0.0 or depth_values(0) < 0.0
                 #    depth_values = depth_values * depth_conversion
@@ -673,8 +673,10 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
                 # Set the platform type from the global attribute 'platform_type', defaulting to 'fixed'
                 with EnhancedDataset(ts.out_file, 'a') as onc:
                     # try setting 'z' to 0 for waves here
-                    if 'wh_4061' in onc.variables:
-                        print ('wave height variable present, so is a waves file, figure out how to put 0 in z')
+                    for v in onc.variables:
+                        print(v)
+                        if v == 'wh_4061':
+                            print ('wave height variable present, so is a waves file, figure out how to put 0 in z')
                     platform_type = getattr(onc, 'platform_type', 'fixed').lower()
                     onc.variables['platform'].setncattr('type', platform_type)
                     onc.variables['platform'].setncattr('nodc_name', "FIXED PLATFORM, MOORINGS")
