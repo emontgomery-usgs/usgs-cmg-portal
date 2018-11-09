@@ -579,7 +579,7 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
             #get mooring_id from attribute instead of file name
             with EnhancedDataset(temp_file) as nc:
                 try:
-                    mooring_id = nc.ncattrs.get("MOORING")
+                    mooring_id = getattr(nc,'MOORING')
                 except ValueError:
                     logger.exception("Could not create a suitable station_id. Skipping {0}.".format(down_file))
                     continue
