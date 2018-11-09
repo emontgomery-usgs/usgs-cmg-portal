@@ -631,7 +631,9 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
                 except (AssertionError, TypeError):
                     try:
                         # this is currently only used by Vp waves files, since there's no depth() variable/dimension
-                        depth_values = np.asarray([-file_global_attributes['WATER_DEPTH'] + file_global_attributes['initial_instrument_height']])
+                        # inserting 0 because that's the best answer
+                        #depth_values = np.asarray([-file_global_attributes['WATER_DEPTH'] + file_global_attributes['initial_instrument_height']])
+                        depth_values = np.asarray(0)
                         #print(file_global_attributes['WATER_DEPTH'])
                         #print(file_global_attributes['initial_instrument_height'])
                         #print(depth_variables, depth_values)
