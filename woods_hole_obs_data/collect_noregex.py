@@ -576,6 +576,9 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
                     else:
                         # 3 digit if before
                         mooring_id = int(fname[0:3])
+            except ValueError:
+                logger.exception("Could not create a suitable station_id. Skipping {0}.".format(down_file))
+                continue
  
             #this doesn't work -get mooring_id from attribute instead of file name
             #with EnhancedDataset(temp_file) as nc:
