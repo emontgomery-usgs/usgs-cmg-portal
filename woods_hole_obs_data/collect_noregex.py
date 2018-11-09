@@ -435,15 +435,15 @@ def normalize_units(netcdf_file):
                 nc_var.note = 'Compass Direction TO which waves are propagating'
                 convert_attributes(nc_var, d)
             # this should work, but ends up with sea_surface_wave_to_direction as standard_name!
-            #elif hasattr(nc_var, 'standard_name') and nc_var.standard_name == 'sea_surface_wave_from_direction_at_variance_spectral_density_maximum':
+            elif hasattr(nc_var, 'standard_name') and nc_var.standard_name == 'sea_surface_wave_from_direction_at_variance_spectral_density_maximum':
                 # Convert "From" to "To" direction
-                #def d(x):
-                #    return (x + 180) % 360
-                #nc_var[:] = d(nc_var[:])
-                #nc_var.standard_name = 'sea_surface_wave_to_direction_at_variance_spectral_density_maximum'
-                #nc_var.long_name = "Wave Direction (to TN)"
-                #nc_var.note = 'Compass Direction TO which waves are propagating'
-                #convert_attributes(nc_var, d)
+                def d(x):
+                    return (x + 180) % 360
+                nc_var[:] = d(nc_var[:])
+                nc_var.standard_name = 'sea_surface_wave_to_direction_at_variance_spectral_density_maximum'
+                nc_var.long_name = "Wave Direction (to TN)"
+                nc_var.note = 'Dominate wave direction (propagating TO) as defined by direction band with most total energy summed over all frequencies'
+                convert_attributes(nc_var, d)
 
 def normalize_time(netcdf_file):
     epoch_units       = 'seconds since 1970-01-01T00:00:00Z'
@@ -632,22 +632,22 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
                 for dv in nc.variables:
                     depth_variables += [ x for x in nc.variables.get(dv).dimensions if 'depth' in x ]
                 depth_variables = sorted(list(set(depth_variables)))
-                print('in depth_variables we have: ')
-                print(depth_variables)
                 try:
                     assert depth_variables
                     depth_values = np.asarray([ nc.variables.get(x)[:] for x in depth_variables ]).flatten()
+                    print('with a depth variable we get value(s): ')
+                    print(depth_values)
+
                 except (AssertionError, TypeError):
                     try:
                         # this is currently only used by Vp waves files, since there's no depth() variable/dimension
                         #depth_values = np.asarray([-file_global_attributes['WATER_DEPTH'] + file_global_attributes['initial_instrument_height']])
                         # inserting 0 because that's the best answer
                         depth_values = np.asarray(0)
-                        print ('with no depth variable, we have: ')
-                        print(depth_variables)    
+                        print ('with no depth variable, we have depth value: ')
+                        print(depth_values)    
                         #print(file_global_attributes['WATER_DEPTH'])
                         #print(file_global_attributes['initial_instrument_height'])
-                        #print(depth_variables, depth_values)
                     except TypeError:
                         logger.warning("No depth variables found in {}, skipping.".format(down_file))
                         continue
