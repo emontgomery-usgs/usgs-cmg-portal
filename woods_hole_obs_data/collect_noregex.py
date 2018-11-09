@@ -433,6 +433,7 @@ def normalize_units(netcdf_file):
                 nc_var[:] = d(nc_var[:])
                 nc_var.standard_name = 'sea_surface_wave_to_direction'
                 nc_var.long_name = "Wave Direction (to TN)"
+                nc_var.note = 'Compass Direction TO which waves are propagating
                 convert_attributes(nc_var, d)
 
 
