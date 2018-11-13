@@ -680,9 +680,9 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
                     onc.cdm_timeseries_variables = "latitude,longitude,z,feature_type_instance"
                     # remove _FillValue from z dimension
                     zvar = onc.variables.get('z')
-                        zatts =  { k : getattr(zvar, k) for k in zvar.ncattrs() }
-                        if '_FillValue' in zatts
-                            del zatts['_FillValue']
+                    zatts =  { k : getattr(zvar, k) for k in zvar.ncattrs() }
+                    if '_FillValue' in zatts:
+                        del zatts['_FillValue']
 
                 v = []
                 depth_files = []
