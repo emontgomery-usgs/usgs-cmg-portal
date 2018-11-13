@@ -678,6 +678,11 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
                     # Add ERDDAP variables
                     onc.cdm_data_type = "TimeSeries"
                     onc.cdm_timeseries_variables = "latitude,longitude,z,feature_type_instance"
+                    # remove _FillValue from z dimension
+                    zvar = onc.variables.get('z')
+                        zatts =  { k : getattr(zvar, k) for k in zvar.ncattrs() }
+                        if '_FillValue' in zatts
+                            del zatts['_FillValue']
 
                 v = []
                 depth_files = []
@@ -689,6 +694,8 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
                         if other == 'wh_4061' or other == 'pspec':
                             print ('wave height or pspec variable present, so is a waves file, setting z to 0')
                             onc.variables['z'][:] = 0
+                            onc.variables['z'].setncattr('valid_min',0)
+                            onc.variables['z'].setncattr('valid_max',0)
 
                         ovsd = None  # old var sensor depth
                         old_var = nc.variables.get(other)
