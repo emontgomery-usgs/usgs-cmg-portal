@@ -686,11 +686,11 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
                         if other in coord_vars:
                             continue
                         # try setting 'z' to 0 for waves here                   
-                        if other == 'wh_4061' or other == 'pspec':
-                            print ('wave height or pspec variable present, so is a waves file, setting z to 0')
-                            onc.variables['z'][:] = 0
-                            onc.variables['z'].setncattr('valid_min',0)
-                            onc.variables['z'].setncattr('valid_max',0)
+                        #if other == 'wh_4061' or other == 'pspec':
+                        #    print ('wave height or pspec variable present, so is a waves file, setting z to 0')
+                        #    onc.variables['z'][:] = 0
+                        #    onc.variables['z'].setncattr('valid_min',0)
+                        #    onc.variables['z'].setncattr('valid_max',0)
 
                         ovsd = None  # old var sensor depth
                         old_var = nc.variables.get(other)
@@ -813,6 +813,12 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
                                 ts.add_variable(other, values=old_var[:], times=times, fillvalue=fillvalue, attributes=variable_attributes)
                             else:
                                 ts.add_variable_object(old_var, dimension_map=dict(depth='z'), reduce_dims=True)
+                            # try setting 'z' to 0 for waves here                   
+                            if other == 'wh_4061' or other == 'pspec':
+                                print ('wave height or pspec variable present, so is a waves file, setting z to 0')
+                                ts.variables['z'][:] = 0.0
+                                ts.variables['z'].setncattr('valid_min',0.0)
+                                ts.variables['z'].setncattr('valid_max',0.0)
 
                     except BaseException:
                         logger.exception("Error processing variable {0} in {1}. Skipping it.".format(other, down_file))
