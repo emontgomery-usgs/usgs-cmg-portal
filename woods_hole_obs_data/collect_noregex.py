@@ -678,11 +678,6 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
                     # Add ERDDAP variables
                     onc.cdm_data_type = "TimeSeries"
                     onc.cdm_timeseries_variables = "latitude,longitude,z,feature_type_instance"
-                    # remove _FillValue from z dimension
-                    zvar = onc.variables.get('z')
-                    zatts =  { k : getattr(zvar, k) for k in zvar.ncattrs() }
-                    if '_FillValue' in zatts:
-                        del zatts['_FillValue']
 
                 v = []
                 depth_files = []
@@ -721,6 +716,11 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
                         fillvalue = None
                         if hasattr(old_var, "_FillValue"):
                             fillvalue = old_var._FillValue
+                        # if present, remove _FillValue from z dimension
+                        zvar = onc.variables.get('z')
+                        zatts =  { k : getattr(zvar, k) for k in zvar.ncattrs() }
+                        if '_FillValue' in zatts:
+                            del zatts['_FillValue']
 
                         # Figure out if this is a variable that is repeated at different depths
                         # as different variable names.   Assumes sorted.
