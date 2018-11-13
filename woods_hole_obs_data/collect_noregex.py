@@ -688,7 +688,7 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
                         # try setting 'z' to 0 for waves here                   
                         if other == 'wh_4061':
                             print ('wave height variable present, so is a waves file, setting z to 0')
-                            nc.variables['z'][:] = 0
+                            nc.variables['depth'][:] = 0
 
                         ovsd = None  # old var sensor depth
                         old_var = nc.variables.get(other)
