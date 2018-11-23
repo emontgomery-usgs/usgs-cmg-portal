@@ -6,6 +6,7 @@ dependencies:
   - python=3.5
   - numpy
   - netCDF4
+  - cf_units
   - thredds_crawler>=1.2.0
   - pandas
   - requests
@@ -15,3 +16,4 @@ dependencies:
   - libnetcdf
   - pygc
   - pytest
+  - nb_conda_kernels

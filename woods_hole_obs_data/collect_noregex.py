@@ -25,6 +25,7 @@ from pyaxiom.netcdf.dataset import EnhancedDataset
 from pyaxiom.utils import DotDict
 
 import coloredlogs
+import pdb
 
 # Log to stdout
 logger = logging.getLogger()
@@ -202,7 +203,7 @@ global_attributes = {
     'date_created':             datetime.utcnow().strftime("%Y-%m-%dT%H:%M:00Z")
 }
 
-coord_vars      = ['feature_type_instance', 'time', 'time2', 'time_cf', 'old_time', 'depth', 'depth002', 'depth003', 'depth004', 'depth005', 'lat', 'lon']
+coord_vars      = ['feature_type_instance', 'time', 'time2', 'time_cf', 'old_time', 'depth', 'depth002', 'depth003', 'depth004', 'depth005', 'lat', 'lon','frequency','direction','burst']
 
 
 def download(folder, project_metadata, filesubset, since):
@@ -523,7 +524,7 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
                 modt = datetime.utcfromtimestamp(os.path.getmtime(d)).replace(tzinfo=pytz.utc)
                 return modt >= since
             downloaded_files = [ dl for dl in downloaded_files if should_keep(dl) ]
-
+    wave_flag = False
     for down_file in sorted(downloaded_files):
         #print(down_file)
         temp_fd, temp_file = tempfile.mkstemp(prefix='cmg_collector', suffix='nc')
@@ -593,6 +594,7 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
             logger.info("Translating {0} into CF1.6 format: {1}".format(down_file, os.path.abspath(os.path.join(output_directory, file_name))))
 
             with EnhancedDataset(temp_file) as nc:
+                #pdb.set_trace()
                 try:
                     latitude  = nc.variables.get("lat")[0]
                     longitude = nc.variables.get("lon")[0]
@@ -603,6 +605,8 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
                     logger.error("Could not find lat/lon variables. Skipping {0}.".format(down_file))
 
                 file_global_attributes = { k : getattr(nc, k) for k in nc.ncattrs() }
+                #nc.ncattrs() returned a list of the names (keys)
+				#global_attributes is set at the beginning, this updates #file_global_attributes to include them
                 file_global_attributes.update(global_attributes)
                 file_global_attributes['id'] = feature_name
                 #file_global_attributes['MOORING'] = mooring_id
@@ -636,20 +640,24 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
                 depth_variables = sorted(list(set(depth_variables)))
                 try:
                     assert depth_variables
+					# this line goes into netcdf4 and tries to find dimensions matching
+					# the names in depth_variables
                     depth_values = np.asarray([ nc.variables.get(x)[:] for x in depth_variables ]).flatten()
                     print('with a depth variable we get value(s): ')
                     print(depth_values)
 
                 except (AssertionError, TypeError):
                     try:
-                        # this is currently only used by Vp waves files, since there's no depth() variable/dimension
-                        #depth_values = np.asarray([-file_global_attributes['WATER_DEPTH'] + file_global_attributes['initial_instrument_height']])
+                        #I think all this can be handled better elsewhere
+                        #this is currently only used by Vp waves files, since there's no depth() variable/dimension                      
                         # inserting 0 because that's the best answer
-                        depth_values = np.asarray(0)
-                        print ('with no depth variable, we have depth value: ')
-                        print(depth_values)    
+                        #depth_values = np.asarray(0)
+                        #print ('with no depth variable, we have depth value: ')
+                        #print(depth_values)    
                         #print(file_global_attributes['WATER_DEPTH'])
                         #print(file_global_attributes['initial_instrument_height'])
+                        logger.warning("No depth variables found in {}, will try to process as waves.".format(down_file))
+                        #continue
                     except TypeError:
                         logger.warning("No depth variables found in {}, skipping.".format(down_file))
                         continue
@@ -662,9 +670,15 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
                     if hasattr(pull_positive, 'positive') and pull_positive.positive.lower() == 'up':
                         depth_conversion = 1.0
                 depth_values = depth_values * depth_conversion
-                # this doesn't work, but depth conversion should only happen if not 0
-                #if depth_values(0) > 0.0 or depth_values(0) < 0.0
-                #    depth_values = depth_values * depth_conversion
+                # see if it's a waves file, and if so set depth_values to 0.0
+                #before call,depth_values is a numpy.ndarray of float64, 
+                # size (1,) value [-.97]
+                for k in nc.variables.keys():
+                    if 'wh_4061' == k or 'pspec' == k:
+                        print('we have a waves file, setting depth_values to 0')
+                        depth_values = np.asarray([0.0])
+                        wave_flag = True;
+                        break
 
                 if not os.path.isdir(output_directory):
                     os.makedirs(output_directory)
@@ -678,6 +692,8 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
                     # Add ERDDAP variables
                     onc.cdm_data_type = "TimeSeries"
                     onc.cdm_timeseries_variables = "latitude,longitude,z,feature_type_instance"
+#                   'z' should be instantiated and set in timeseries.py, if verticals is set and doesn't get overwritten
+                    onc.variables['z'].setncattr('long_name','height of the variable data relative to the water surface')
 
                 v = []
                 depth_files = []
@@ -685,13 +701,7 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
                     try:
                         if other in coord_vars:
                             continue
-                        # try setting 'z' to 0 for waves here                   
-                        #if other == 'wh_4061' or other == 'pspec':
-                        #    print ('wave height or pspec variable present, so is a waves file, setting z to 0')
-                        #    onc.variables['z'][:] = 0
-                        #    onc.variables['z'].setncattr('valid_min',0)
-                        #    onc.variables['z'].setncattr('valid_max',0)
-
+ 
                         ovsd = None  # old var sensor depth
                         old_var = nc.variables.get(other)
                         variable_attributes = { k : getattr(old_var, k) for k in old_var.ncattrs() }
@@ -771,7 +781,7 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
                                 ts.add_variable(new_var_name, values=values, times=times, fillvalue=fillvalue, attributes=variable_attributes)
 
                         elif len(old_var.dimensions) == 1 and old_var.dimensions[0] == 'time':
-                            # A single time dimensioned variable, like pitch, roll, record count, etc.
+                            # A single time dimensioned variable, like pitch, roll, record count, etc. (or burst in waves)
                             ts.add_variable(other, values=old_var[:], times=times, unlink_from_profile=True, fillvalue=fillvalue, attributes=variable_attributes)
                         elif old_var.ndim <= 3 and ovsd and \
                                 ((depth_values.size == 1 and not depth_variable and 'time' in old_var.dimensions) or
@@ -794,12 +804,22 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
 
                                 # If we couldn't match the current or one of the existing secondary depth files, create a new one.
                                 if found_df is False:
+                                    tmp_ovsd=ovsd
+                                    if wave_flag and 'frequency' in old_var.dimensions:                                        
+                                        ovsd=np.asarray([0.0])
                                     new_file_name = file_name.replace(file_ext, '_z{}{}'.format(len(depth_files) + 1, file_ext))
                                     fga = copy(file_global_attributes)
                                     fga['id'] = os.path.splitext(new_file_name)[0]
                                     new_ts = TimeSeries(output_directory, latitude, longitude, feature_name, fga, times=times, verticals=[ovsd], output_filename=new_file_name, vertical_positive='up')
                                     new_ts.add_variable(other, values=old_var[:], times=times, verticals=[ovsd], fillvalue=fillvalue, attributes=variable_attributes)
                                     depth_files.append(new_ts)
+                                    new_ts.variables['z'].setncattr('long_name','height of the variable data relative to the water surface')
+                                    ovsd=tmp_ovsd
+                                    #new_ts.cdm_data_type = getattr(new_ts,'featureType')    
+                        #elif old_var.ndim == 3 and old_var.dimensions[0] == 'time':
+                        #    ts.add_variable(other, values=old_var[:], times=times, unlink_from_profile=True, fillvalue=fillvalue, attributes=variable_attributes)
+                        elif 'frequency' in old_var.dimensions:
+                            new_ts.add_variable(other, values=old_var[:], times=times, verticals=[ovsd], unlink_from_profile=True, fillvalue=fillvalue, attributes=variable_attributes)
                         elif old_var.ndim <= 3 and (depth_values.size > 1 and not depth_variable and 'time' in old_var.dimensions):
                             if ovsd:
                                 # An ADCP or profiling dataset, but this variable is measued at a single depth.
@@ -813,14 +833,7 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
                                 ts.add_variable(other, values=old_var[:], times=times, fillvalue=fillvalue, attributes=variable_attributes)
                             else:
                                 ts.add_variable_object(old_var, dimension_map=dict(depth='z'), reduce_dims=True)
-                            # try setting 'z' to 0 for waves here                   
-                            if other == 'wh_4061' or other == 'pspec':
-                                print ('wave height or pspec variable present, so is a waves file, setting z to 0')
-                                # the ts object doesn't have variables, so point to onc
-                                onc.variables['z'][:] = 0.0
-                                onc.variables['z'].setncattr('valid_min',0.0)
-                                onc.variables['z'].setncattr('valid_max',0.0)
-
+ 
                     except BaseException:
                         logger.exception("Error processing variable {0} in {1}. Skipping it.".format(other, down_file))
         except KeyboardInterrupt:
