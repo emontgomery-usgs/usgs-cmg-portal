@@ -524,9 +524,9 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
                 modt = datetime.utcfromtimestamp(os.path.getmtime(d)).replace(tzinfo=pytz.utc)
                 return modt >= since
             downloaded_files = [ dl for dl in downloaded_files if should_keep(dl) ]
-    wave_flag = False
     for down_file in sorted(downloaded_files):
-        #print(down_file)
+       #print(down_file)
+        wave_flag = False 
         temp_fd, temp_file = tempfile.mkstemp(prefix='cmg_collector', suffix='nc')
         try:
 
@@ -738,101 +738,102 @@ def main(output, download_folder, do_download, projects, csv_metadata_file, file
                         if new_var_name in ts.ncd.variables:
                             # Already in new file (processed when the first was encountered in the loop below)
                             continue
-
-                        # Get the depth index
-                        depth_variable = [ x for x in old_var.dimensions if 'depth' in x ]
-                        if depth_variable and len(old_var.dimensions) > 1 and 'time' in old_var.dimensions:
-                            depth_index = np.squeeze(np.where(depth_values == (nc.variables.get(depth_variable[0])[:] * depth_conversion)))
-
-                            # Find other variable names like this one
-                            depth_indexes = [(other, depth_index)]
-                            for search_var in sorted(nc.variables):
-                                # If they have different depth dimension names we need to combine them into one variable
-                                if search_var != other and search_var.split('_')[0] == new_var_name and \
-                                   depth_variable[0] != [ x for x in nc.variables[search_var].dimensions if 'depth' in x ][0]:
-                                    # Found a match at a different depth
-                                    search_depth_variable = [ x for x in nc.variables.get(search_var).dimensions if 'depth' in x ]
-                                    depth_index = np.squeeze(np.where(depth_values == (nc.variables.get(search_depth_variable[0])[:] * depth_conversion)))
-                                    depth_indexes.append((search_var, depth_index))
-                                    logger.info("Combining '{}' with '{}' as '{}' (different variables at different depths but are the same parameter)".format(search_var, other, new_var_name))
-
-                            values = np.ma.empty((times.size, len(depth_values)), dtype=old_var.dtype)
-                            values.fill_value = values.dtype.type(fillvalue)
-                            fillvalue = values.dtype.type(fillvalue)
-                            values.mask = True
-                            inconsistent = False
-                            for nm, index in depth_indexes:
-                                try:
-                                    values[:, index] = np.squeeze(nc.variables.get(nm)[:])
-                                except ValueError:
-                                    inconsistent = True
-                                    break
-
-                            # If we just have one index we want to use the original name
-                            if len(depth_indexes) == 1:
-                                # Just use the original variable name
-                                new_var_name = other
-
-                            if inconsistent is True:
-                                # Incorrect array size, most likely a strange variable
-                                ts.add_variable_object(old_var, dimension_map=dict(depth='z'), reduce_dims=True)
-                            else:
-                                # Create this one, should be the first we encounter for this type
-                                ts.add_variable(new_var_name, values=values, times=times, fillvalue=fillvalue, attributes=variable_attributes)
-
-                        elif len(old_var.dimensions) == 1 and old_var.dimensions[0] == 'time':
-                            # A single time dimensioned variable, like pitch, roll, record count, etc. (or burst in waves)
-                            ts.add_variable(other, values=old_var[:], times=times, unlink_from_profile=True, fillvalue=fillvalue, attributes=variable_attributes)
-                        elif old_var.ndim <= 3 and ovsd and \
-                                ((depth_values.size == 1 and not depth_variable and 'time' in old_var.dimensions) or
-                                 (depth_values.size  > 1 and not depth_variable and 'time' in old_var.dimensions and 'sensor_depth' in ts.ncd.variables)):
-
-                            if 'sensor_depth' in ts.ncd.variables and np.isclose(ts.ncd.variables['sensor_depth'][:], ovsd):
-                                ts.add_variable(other, values=old_var[:], times=times, unlink_from_profile=True, verticals=[ovsd], fillvalue=fillvalue, attributes=variable_attributes)
-                            else:
-                                # Search through secondary files that have been created for detached variables at a certain depth and
-                                # try to match this variable with one of the depths.
-                                found_df = False
-                                for dfts in depth_files:
-                                    if isinstance(ovsd, np.ndarray):
-                                        # Well, this is a bad file.
-                                        raise ValueError("The sensor_depth attribute has more than one value, please fix the source NetCDF: {}".format(down_file))
-                                    if np.isclose(dfts.ncd.variables[ts.vertical_axis_name][:], ovsd):
-                                        dfts.add_variable(other, values=old_var[:], times=times, unlink_from_profile=True, verticals=[ovsd], fillvalue=fillvalue, attributes=variable_attributes)
-                                        found_df = True
+                        # put all wave vars into the  same file, with z set to 0
+                        # this works for all but diwasp, where CS and CD are at a slightly different height
+                        if wave_flag:
+                            ts.add_variable_object(old_var, dimension_map=dict(depth='z'), reduce_dims=True)
+                        else:                       
+                            # Get the depth index
+                            depth_variable = [ x for x in old_var.dimensions if 'depth' in x ]
+                            if depth_variable and len(old_var.dimensions) > 1 and 'time' in old_var.dimensions:
+                                depth_index = np.squeeze(np.where(depth_values == (nc.variables.get(depth_variable[0])[:] * depth_conversion)))
+    
+                                # Find other variable names like this one
+                                depth_indexes = [(other, depth_index)]
+                                for search_var in sorted(nc.variables):
+                                    # If they have different depth dimension names we need to combine them into one variable
+                                    if search_var != other and search_var.split('_')[0] == new_var_name and \
+                                       depth_variable[0] != [ x for x in nc.variables[search_var].dimensions if 'depth' in x ][0]:
+                                        # Found a match at a different depth
+                                        search_depth_variable = [ x for x in nc.variables.get(search_var).dimensions if 'depth' in x ]
+                                        depth_index = np.squeeze(np.where(depth_values == (nc.variables.get(search_depth_variable[0])[:] * depth_conversion)))
+                                        depth_indexes.append((search_var, depth_index))
+                                        logger.info("Combining '{}' with '{}' as '{}' (different variables at different depths but are the same parameter)".format(search_var, other, new_var_name))
+    
+                                values = np.ma.empty((times.size, len(depth_values)), dtype=old_var.dtype)
+                                values.fill_value = values.dtype.type(fillvalue)
+                                fillvalue = values.dtype.type(fillvalue)
+                                values.mask = True
+                                inconsistent = False
+                                for nm, index in depth_indexes:
+                                    try:
+                                        values[:, index] = np.squeeze(nc.variables.get(nm)[:])
+                                    except ValueError:
+                                        inconsistent = True
                                         break
-
-                                # If we couldn't match the current or one of the existing secondary depth files, create a new one.
-                                if found_df is False:
-                                    tmp_ovsd=ovsd
-                                    if wave_flag and 'frequency' in old_var.dimensions:                                        
-                                        ovsd=np.asarray([0.0])
-                                    new_file_name = file_name.replace(file_ext, '_z{}{}'.format(len(depth_files) + 1, file_ext))
-                                    fga = copy(file_global_attributes)
-                                    fga['id'] = os.path.splitext(new_file_name)[0]
-                                    new_ts = TimeSeries(output_directory, latitude, longitude, feature_name, fga, times=times, verticals=[ovsd], output_filename=new_file_name, vertical_positive='up')
-                                    new_ts.add_variable(other, values=old_var[:], times=times, verticals=[ovsd], fillvalue=fillvalue, attributes=variable_attributes)
-                                    depth_files.append(new_ts)
-                                    new_ts.variables['z'].setncattr('long_name','height of the variable data relative to the water surface')
-                                    ovsd=tmp_ovsd
-                                    #new_ts.cdm_data_type = getattr(new_ts,'featureType')    
-                        #elif old_var.ndim == 3 and old_var.dimensions[0] == 'time':
-                        #    ts.add_variable(other, values=old_var[:], times=times, unlink_from_profile=True, fillvalue=fillvalue, attributes=variable_attributes)
-                        elif 'frequency' in old_var.dimensions:
-                            new_ts.add_variable(other, values=old_var[:], times=times, verticals=[ovsd], unlink_from_profile=True, fillvalue=fillvalue, attributes=variable_attributes)
-                        elif old_var.ndim <= 3 and (depth_values.size > 1 and not depth_variable and 'time' in old_var.dimensions):
-                            if ovsd:
-                                # An ADCP or profiling dataset, but this variable is measued at a single depth.
-                                # Example: Bottom Temperature on an ADCP
-                                # Skip things with a dimension over 3 (some beam variables like `brange`)
-                                ts.add_variable(other, values=old_var[:], times=times, unlink_from_profile=True, verticals=[ovsd], fillvalue=fillvalue, attributes=variable_attributes)
-                            else:
+    
+                                # If we just have one index we want to use the original name
+                                if len(depth_indexes) == 1:
+                                    # Just use the original variable name
+                                    new_var_name = other
+    
+                                if inconsistent is True:
+                                    # Incorrect array size, most likely a strange variable
+                                    ts.add_variable_object(old_var, dimension_map=dict(depth='z'), reduce_dims=True)
+                                else:
+                                    # Create this one, should be the first we encounter for this type
+                                    ts.add_variable(new_var_name, values=values, times=times, fillvalue=fillvalue, attributes=variable_attributes)   
+                            elif len(old_var.dimensions) == 1 and old_var.dimensions[0] == 'time':
+                                # A single time dimensioned variable, like pitch, roll, record count, etc. (or burst in waves)
                                 ts.add_variable(other, values=old_var[:], times=times, unlink_from_profile=True, fillvalue=fillvalue, attributes=variable_attributes)
-                        else:
-                            if 'time' in old_var.dimensions and old_var.ndim <= 3:
-                                ts.add_variable(other, values=old_var[:], times=times, fillvalue=fillvalue, attributes=variable_attributes)
+                            elif old_var.ndim <= 3 and ovsd and \
+                                    ((depth_values.size == 1 and not depth_variable and 'time' in old_var.dimensions) or
+                                     (depth_values.size  > 1 and not depth_variable and 'time' in old_var.dimensions and 'sensor_depth' in ts.ncd.variables)):
+    
+                                if 'sensor_depth' in ts.ncd.variables and np.isclose(ts.ncd.variables['sensor_depth'][:], ovsd):
+                                    ts.add_variable(other, values=old_var[:], times=times, unlink_from_profile=True, verticals=[ovsd], fillvalue=fillvalue, attributes=variable_attributes)
+                                else:
+                                    # Search through secondary files that have been created for detached variables at a certain depth and
+                                    # try to match this variable with one of the depths.
+                                    found_df = False
+                                    for dfts in depth_files:
+                                        if isinstance(ovsd, np.ndarray):
+                                            # Well, this is a bad file.
+                                            raise ValueError("The sensor_depth attribute has more than one value, please fix the source NetCDF: {}".format(down_file))
+                                        if np.isclose(dfts.ncd.variables[ts.vertical_axis_name][:], ovsd):
+                                            dfts.add_variable(other, values=old_var[:], times=times, unlink_from_profile=True, verticals=[ovsd], fillvalue=fillvalue, attributes=variable_attributes)
+                                            found_df = True
+                                            break
+    
+                                    # If we couldn't match the current or one of the existing secondary depth files, create a new one.
+                                    if found_df is False:
+                                        tmp_ovsd=ovsd
+                                        #if wave_flag and 'frequency' in old_var.dimensions:                                        
+                                        #    ovsd=np.asarray([0.0])
+                                        new_file_name = file_name.replace(file_ext, '_z{}{}'.format(len(depth_files) + 1, file_ext))
+                                        fga = copy(file_global_attributes)
+                                        fga['id'] = os.path.splitext(new_file_name)[0]
+                                        new_ts = TimeSeries(output_directory, latitude, longitude, feature_name, fga, times=times, verticals=[ovsd], output_filename=new_file_name, vertical_positive='up')
+                                        new_ts.add_variable(other, values=old_var[:], times=times, verticals=[ovsd], fillvalue=fillvalue, attributes=variable_attributes)
+                                        depth_files.append(new_ts)
+                                        new_ts.variables['z'].setncattr('long_name','height of the variable data relative to the water surface')
+                                        ovsd=tmp_ovsd
+                                        #new_ts.cdm_data_type = getattr(new_ts,'featureType')    
+                            #elif old_var.ndim == 3 and old_var.dimensions[0] == 'time':
+                            #    ts.add_variable(other, values=old_var[:], times=times, unlink_from_profile=True, fillvalue=fillvalue, attributes=variable_attributes)
+                            elif old_var.ndim <= 3 and (depth_values.size > 1 and not depth_variable and 'time' in old_var.dimensions):
+                                if ovsd:
+                                    # An ADCP or profiling dataset, but this variable is measued at a single depth.
+                                    # Example: Bottom Temperature on an ADCP
+                                    # Skip things with a dimension over 3 (some beam variables like `brange`)
+                                    ts.add_variable(other, values=old_var[:], times=times, unlink_from_profile=True, verticals=[ovsd], fillvalue=fillvalue, attributes=variable_attributes)
+                                else:
+                                    ts.add_variable(other, values=old_var[:], times=times, unlink_from_profile=True, fillvalue=fillvalue, attributes=variable_attributes)
                             else:
-                                ts.add_variable_object(old_var, dimension_map=dict(depth='z'), reduce_dims=True)
+                                if 'time' in old_var.dimensions and old_var.ndim <= 3:
+                                    ts.add_variable(other, values=old_var[:], times=times, fillvalue=fillvalue, attributes=variable_attributes)
+                                else:
+                                    ts.add_variable_object(old_var, dimension_map=dict(depth='z'), reduce_dims=True)
  
                     except BaseException:
                         logger.exception("Error processing variable {0} in {1}. Skipping it.".format(other, down_file))
