@@ -394,26 +394,31 @@ def normalize_vectors(netcdf_file):
                 std_names.append(var.standard_name)
 
         # Only add the variables if they don't already exist
-        if east is not None and north is not None and 'sea_water_speed' not in std_names and 'direction_of_sea_water_velocity' not in std_names:
-            # We have vectors... create the speed and direction variables
-            speed = np.sqrt(np.square(east[:]) + np.square(north[:]))
-            direction = np.degrees(np.arctan2(north[:], east[:]))
-
-            east_fill_value = east._FillValue if hasattr(east, '_FillValue') else np.nan
-            spd = nc.createVariable('CS_300', east.dtype, east.dimensions, fill_value=east_fill_value)
-            spd.standard_name = 'sea_water_speed'
-            spd.long_name = "Current speed"
-            spd.units = 'm/s'
-            spd.epic_code = 300
-            spd[:] = speed
-
-            drc = nc.createVariable('CD_310', east.dtype, east.dimensions, fill_value=east_fill_value)
-            drc.standard_name = 'direction_of_sea_water_velocity'
-            drc.long_name = "Current direction"
-            drc.units = 'degree'
-            drc.epic_code = 310
-            drc[:] = direction
-
+# =============================================================================
+# #     Current direction should be "to"  not sure if the computation used generates
+# #     "to" direction or a from direction, but should be to.  
+# #     Commented out 12/7/18 etm
+# #        if east is not None and north is not None and 'sea_water_speed' not in std_names and 'direction_of_sea_water_velocity' not in std_names:
+# #            # We have vectors... create the speed and direction variables
+# #            speed = np.sqrt(np.square(east[:]) + np.square(north[:]))
+# #            direction = np.degrees(np.arctan2(north[:], east[:]))
+# #
+# #            east_fill_value = east._FillValue if hasattr(east, '_FillValue') else np.nan
+# #            spd = nc.createVariable('CS_300', east.dtype, east.dimensions, fill_value=east_fill_value)
+# #            spd.standard_name = 'sea_water_speed'
+# #            spd.long_name = "Current speed"
+# #            spd.units = 'm/s'
+# #            spd.epic_code = 300
+# #            spd[:] = speed
+# #
+# #            drc = nc.createVariable('CD_310', east.dtype, east.dimensions, fill_value=east_fill_value)
+# #            drc.standard_name = 'direction_of_sea_water_velocity'
+# #            drc.long_name = "Current direction"
+# #            drc.units = 'degree'
+# #            drc.epic_code = 310
+# #            drc[:] = direction
+# 
+# =============================================================================
 
 def normalize_units(netcdf_file):
     with EnhancedDataset(netcdf_file, 'a') as nc:
@@ -426,26 +431,29 @@ def normalize_units(netcdf_file):
                 nc_var[:] = d(nc_var[:])
                 nc_var.units = "degree_Celsius"
                 convert_attributes(nc_var, d)
-            elif hasattr(nc_var, 'standard_name') and nc_var.standard_name == 'sea_surface_wave_from_direction':
-                # Convert "From" to "To" direction
-                def d(x):
-                    return (x + 180) % 360
-                nc_var[:] = d(nc_var[:])
-                nc_var.standard_name = 'sea_surface_wave_to_direction'
-                nc_var.long_name = "Wave Direction (to TN)"
-                nc_var.note = 'Compass Direction TO which waves are propagating'
-                convert_attributes(nc_var, d)
-            # this should work, but ends up with sea_surface_wave_to_direction as standard_name!
-            elif hasattr(nc_var, 'standard_name') and nc_var.standard_name == 'sea_surface_wave_from_direction_at_variance_spectral_density_maximum':
-                # Convert "From" to "To" direction
-                def d(x):
-                    return (x + 180) % 360
-                nc_var[:] = d(nc_var[:])
-                nc_var.standard_name = 'sea_surface_wave_to_direction_at_variance_spectral_density_maximum'
-                nc_var.long_name = "Wave Direction (to TN)"
-                nc_var.note = 'Dominant wave direction (propagating TO) as defined by direction band with most total energy summed over all frequencies'
-                convert_attributes(nc_var, d)
-
+# =============================================================================
+#        Waves data is already "from", and should be "from". Don't convert to "to"
+# #            elif hasattr(nc_var, 'standard_name') and nc_var.standard_name == 'sea_surface_wave_from_direction':
+# #                # Convert "From" to "To" direction
+# #                def d(x):
+# #                    return (x + 180) % 360
+# #                nc_var[:] = d(nc_var[:])
+# #                nc_var.standard_name = 'sea_surface_wave_to_direction'
+# #                nc_var.long_name = "Wave Direction (to TN)"
+# #                nc_var.note = 'Compass Direction TO which waves are propagating'
+# #                convert_attributes(nc_var, d)
+# #            # this should work, but ends up with sea_surface_wave_to_direction as standard_name!
+# #            elif hasattr(nc_var, 'standard_name') and nc_var.standard_name == 'sea_surface_wave_from_direction_at_variance_spectral_density_maximum':
+# #                # Convert "From" to "To" direction
+# #                def d(x):
+# #                    return (x + 180) % 360
+# #                nc_var[:] = d(nc_var[:])
+# #                nc_var.standard_name = 'sea_surface_wave_to_direction_at_variance_spectral_density_maximum'
+# #                nc_var.long_name = "Wave Direction (to TN)"
+# #                nc_var.note = 'Dominant wave direction (propagating TO) as defined by direction band with most total energy summed over all frequencies'
+# #                convert_attributes(nc_var, d)
+# 
+# =============================================================================
 def normalize_time(netcdf_file):
     epoch_units       = 'seconds since 1970-01-01T00:00:00Z'
     millisecond_units = 'milliseconds since 1858-11-17T00:00:00Z'
